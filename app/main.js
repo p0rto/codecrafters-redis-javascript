@@ -51,6 +51,7 @@ function handleSet(data) {
   if (!key || !value) {
     throw new Error("Missing args");
   }
+  console.log("option", option, "ttl", ttl);
   if (option && ttl) {
     const expTime =
       option.toLowerCase() === "px" ? Number(ttl) : Number(ttl) * 1000;
@@ -66,13 +67,13 @@ function handleGet(data) {
     throw new Error("Missing args");
   }
   const expirationTime = expirationMap.get(key);
+  const storedValue = map.get(key);
 
-  if (expirationTime && expirationTime >= Date.now()) {
-    const storedValue = map.get(key);
-    return `$${storedValue.length}\r\n${storedValue}\r\n`;
+  if ((expirationTime && expirationTime < Date.now()) || !storedValue) {
+    return NULL_BULK_STRING;
   }
 
-  return NULL_BULK_STRING;
+  return `$${storedValue.length}\r\n${storedValue}\r\n`;
 }
 
 server.listen(6379, "127.0.0.1");
