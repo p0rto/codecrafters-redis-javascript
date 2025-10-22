@@ -1,14 +1,21 @@
 const net = require("net");
+const {
+  parseResp,
+} = require("../../codecrafters-git-javascript/app/parser/resp-parser");
+
+const NULL_BULK_STRING = "$-1\r\n";
 
 const map = new Map();
+const expirationMap = new Map();
 
 // Uncomment this block to pass the first stage
 const server = net.createServer((connection) => {
   connection.on("data", (data) => {
     const parsedArgs = parseResp(data.toString());
     console.log(parsedArgs);
+    const [command] = parsedArgs;
     let output;
-    switch (parsedArgs[0].toLowerCase()) {
+    switch (command.toLowerCase()) {
       case "ping":
         output = handlePing();
         break;
@@ -17,13 +24,12 @@ const server = net.createServer((connection) => {
         break;
       case "set":
         output = handleSet(parsedArgs);
-        console.log("output", output);
         break;
       case "get":
         output = handleGet(parsedArgs);
         break;
       default:
-        return null;
+        output = NULL_BULK_STRING;
     }
 
     connection.write(output);
@@ -35,42 +41,40 @@ function handlePing() {
 }
 
 function handleEcho(data) {
-  if (data.length < 2) {
+  const [_, value] = data;
+  if (!value) {
     throw new Error("Missing args");
   }
-  return `$${data[1].length}\r\n${data[1]}\r\n`;
+  return `$${value.length}\r\n${value}\r\n`;
 }
 
 function handleSet(data) {
-  if (data.length < 3) {
+  const [_, key, value, option, ttl] = data;
+  if (!key || !value) {
     throw new Error("Missing args");
   }
-
-  map.set(data[1], data[2]);
+  if (option && ttl) {
+    const expTime =
+      option.toLowerCase() === "px" ? Number(ttl) : Number(ttl) * 1000;
+    expirationMap.set(key, Date.now() + expTime);
+  }
+  map.set(key, value);
   return "+OK\r\n";
 }
 
 function handleGet(data) {
-  if (data.length < 2) {
+  const [_, key] = data;
+  if (!key) {
     throw new Error("Missing args");
   }
-  const val = map.get(data[1]);
+  const expirationTime = expirationMap.get(key);
 
-  return val ? `$${val.length}\r\n${val}\r\n` : "$-1\r\n";
-}
-
-function parseResp(data) {
-  const lines = data.split("\r\n").filter(Boolean);
-  let i = 1;
-  const values = [];
-
-  while (i < lines.length) {
-    if (!lines[i].startsWith("$")) {
-      values.push(lines[i]);
-    }
-    i++;
+  if (expirationTime && expirationTime >= Date.now()) {
+    const storedValue = map.get(key);
+    return `$${storedValue.length}\r\n${storedValue}\r\n`;
   }
-  return values;
+
+  return NULL_BULK_STRING;
 }
 
 server.listen(6379, "127.0.0.1");
