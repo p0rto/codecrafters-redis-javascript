@@ -1,7 +1,5 @@
 const net = require("net");
-const {
-  parseResp,
-} = require("../../codecrafters-git-javascript/app/parser/resp-parser");
+const { parseResp } = require("./parser/resp-parser");
 
 const NULL_BULK_STRING = "$-1\r\n";
 
