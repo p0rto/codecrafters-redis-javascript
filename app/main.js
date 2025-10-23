@@ -26,6 +26,9 @@ const server = net.createServer((connection) => {
       case "get":
         output = handleGet(parsedArgs);
         break;
+      case "rpush":
+        output = handleRPush(parsedArgs);
+        break;
       default:
         output = NULL_BULK_STRING;
     }
@@ -74,6 +77,22 @@ function handleGet(data) {
   }
 
   return `$${storedValue.length}\r\n${storedValue}\r\n`;
+}
+
+function handleRPush(data) {
+  const [_, key, value] = data;
+  if (!key || !value) {
+    throw new Error("Missing args");
+  }
+
+  if (!map.has(key)) {
+    map.set(key, []);
+  }
+
+  const list = map.get(key);
+  list.push(value);
+
+  return `:${list.length}\r\n`;
 }
 
 server.listen(6379, "127.0.0.1");
