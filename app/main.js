@@ -80,17 +80,15 @@ function handleGet(data) {
 }
 
 function handleRPush(data) {
-  const [_, key, value] = data;
-  if (!key || !value) {
+  const [_, key, ...values] = data;
+  if (!key || !values) {
     throw new Error("Missing args");
   }
 
-  if (!map.has(key)) {
-    map.set(key, []);
-  }
+  const list = map.get(key) || [];
 
-  const list = map.get(key);
-  list.push(value);
+  list.push(...values);
+  map.set(key, list);
 
   return `:${list.length}\r\n`;
 }
