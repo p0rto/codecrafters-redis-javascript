@@ -106,7 +106,7 @@ function handleLRange(data) {
   }
 
   if (stop >= list.length) {
-    stop = list.length;
+    stop = list.length - 1;
   }
 
   const sublist = list.slice(start, stop + 1);
