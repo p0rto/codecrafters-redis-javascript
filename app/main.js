@@ -113,7 +113,7 @@ function handleLRange(data) {
 
   const items = sublist
     .map((item) => {
-      `${item.length}\r\n${item}\r\n`;
+      `$${item.length}\r\n${item}\r\n`;
     })
     .join("");
 
