@@ -97,11 +97,19 @@ function handleRPush(data) {
 }
 
 function handleLRange(data) {
-  const [_, key, start, stop] = data;
+  const [_, key, startStr, stopStr] = data;
+  const start = Number(startStr);
+  const stop = Number(stopStr);
 
   const list = map.get(key);
 
-  if (!list || start > stop || start >= list.length) {
+  if (
+    !list ||
+    NaN(start) ||
+    NaN(stop) ||
+    start > stop ||
+    start >= list.length
+  ) {
     return `*0\r\n`;
   }
 
@@ -110,7 +118,6 @@ function handleLRange(data) {
   }
 
   const sublist = list.slice(start, stop + 1);
-
   const items = sublist
     .map((item) => `$${item.length}\r\n${item}\r\n`)
     .join("");
