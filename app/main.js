@@ -29,10 +29,13 @@ const server = net.createServer((connection) => {
       case "rpush":
         output = handleRPush(parsedArgs);
         break;
+      case "lrange":
+        output = handleLRange(parsedArgs);
+        break;
       default:
         output = NULL_BULK_STRING;
     }
-
+    console.log("output", output);
     connection.write(output);
   });
 });
@@ -91,6 +94,30 @@ function handleRPush(data) {
   map.set(key, list);
 
   return `:${list.length}\r\n`;
+}
+
+function handleLRange(data) {
+  const [_, key, start, stop] = data;
+
+  const list = map.get(key);
+
+  if (!list || start > stop || start >= list.length) {
+    return `*0\r\n`;
+  }
+
+  if (stop >= list.length) {
+    stop = list.length;
+  }
+
+  const sublist = list.slice(start, stop + 1);
+
+  const items = sublist
+    .map((item) => {
+      `${item.length}\r\n${item}\r\n`;
+    })
+    .join("");
+
+  return `*${sublist.length}\r\n${items}`;
 }
 
 server.listen(6379, "127.0.0.1");
