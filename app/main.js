@@ -105,8 +105,8 @@ function handleLRange(data) {
 
   if (
     !list ||
-    NaN(start) ||
-    NaN(stop) ||
+    isNaN(start) ||
+    isNaN(stop) ||
     start > stop ||
     start >= list.length
   ) {
