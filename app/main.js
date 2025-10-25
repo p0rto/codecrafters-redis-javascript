@@ -99,7 +99,7 @@ function handleRPush(data) {
 function handleLRange(data) {
   const [_, key, startStr, stopStr] = data;
   const start = Number(startStr);
-  const stop = Number(stopStr);
+  let stop = Number(stopStr);
 
   const list = map.get(key);
 
